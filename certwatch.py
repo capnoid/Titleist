@@ -1,10 +1,23 @@
+import dns.resolver
+import certstream
+import datetime
 import logging
 import sys
-import datetime
-import certstream
+import os
+logfile = 'NEW_DOMAINS.txt'
+
+
+def get_arecord_ip(host):
+    return str(dns.resolver.resolve(host, 'A')[0])
+
+
+def reverse_lookip(address):
+    return str(dns.reversename.from_address(address))
 
 
 def print_callback(message, context):
+    if not os.path.isfile(logfile):
+        open(logfile,'w').write()
     logging.debug("Message -> {}".format(message))
     if message['message_type'] == "heartbeat":
         return
@@ -19,8 +32,15 @@ def print_callback(message, context):
             tsfmt = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
             msg = ", ".join(message['data']['leaf_cert']['all_domains'][1:])
             if domain.split('.')[-1] == 'ru':
-                sys.stdout.write(u"[{}] {} (SAN: {})\n".format(tsfmt, domain, msg))
+                try:
+                    ip = get_arecord_ip(domain)
+                except:
+                    ip = 'unknown'
+                    pass
+                logline = u"[{}] {} (SAN: {}, IP: {})\n".format(tsfmt, domain, msg,ip)
+                sys.stdout.write(logline)
                 sys.stdout.flush()
+                open(logfile, 'a').write(logline)
 
 
 def main():
