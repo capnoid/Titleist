@@ -6,14 +6,8 @@ import sys
 import os
 logfile = 'NEW_DOMAINS.txt'
 
-
 def get_arecord_ip(host):
     return str(dns.resolver.resolve(host, 'A')[0])
-
-
-def reverse_lookip(address):
-    return str(dns.reversename.from_address(address))
-
 
 def print_callback(message, context):
     if not os.path.isfile(logfile):
