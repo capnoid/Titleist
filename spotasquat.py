@@ -1,17 +1,23 @@
 from colorama import init, Fore
+import multiprocessing
 import pandas as pd
 import dns.resolver
 import numpy as np
 import certstream
 import datetime
 import logging
+import random
+import time
+import os
+
 
 # Initializes Colorama
 init(autoreset=True)
 
-# pull from http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
-top1m = pd.read_csv('top-1m.csv')
-TOP_DOMAINS = list(top1m[:]['DOMAIN'])
+# create a log file 
+LOG = os.path.join(os.getcwd(),'squatters.txt')
+if not os.path.isfile(LOG):
+    open(LOG,'w').write('')
 
 fB = Fore.LIGHTBLUE_EX
 fR = Fore.RED
@@ -22,6 +28,8 @@ fG = Fore.GREEN
 fY = Fore.YELLOW
 OFF = ''
 
+top1m = pd.read_csv('top-1m.csv')
+TOP_DOMAINS = list(top1m[:]['DOMAIN'])
 
 def get_arecord_ip(host):
     return str(dns.resolver.resolve(host, 'A')[0])
@@ -77,14 +85,38 @@ def print_callback(message, context):
         else:
             domain = all_domains[0]
             tsfmt = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
-            msg = ", ".join(message['data']['leaf_cert']['all_domains'][1:])
-            spot_a_squat(tsfmt, domain, msg)
+            msg = " , ".join(message['data']['leaf_cert']['all_domains'][1:])
+            
+            # spot_a_squat(tsfmt, domain, msg)
             # Check if the domain looks like a misspelling of a common domain/target domain
-            score = levenshtein(domain, 'discord.com')
-            if 2 >= score > 0:
-                print(f'{tsfmt} {fR} {domain} {fW} was registered [similar to discord?]')
-
+            
+            # Look for Squatters based on Levenshtein Scores
+            # TARGETS = ['*.discord','*.discord-nitro''*.discordapp','*.twitch','*.amazon']
+            # TLDs = ['.com','.gift','.co','.gg','.xyz']
+            
+            # threads = multiprocessing.Pool(5)
+            # for real_domain in TOP_DOMAINS[0:1000]:
+            #     # test_domain(domain, real_domain, msg, tsfmt)
+            #     event = threads.apply_async(test_domain, (domain,f'{real_domain}', msg, tsfmt))
+            #     event.get(2)
+            test_domain(domain,'*.discord-nitro.com', msg, tsfmt)
+            test_domain(domain,'*.discordapp.com', msg, tsfmt)
+            test_domain(domain,'*.discord.gift', msg, tsfmt)
+            test_domain(domain,'*.discord.xyz', msg, tsfmt)
+            test_domain(domain,'*.discord.com', msg, tsfmt)
+            test_domain(domain,'*.discord.co', msg, tsfmt)
+            test_domain(domain,'*.discord.gg', msg, tsfmt)
+            
+        
+def test_domain(dom_registered, dom_real, m, t):
+    log_msg = u"[{}] {} (SAN: {})\n".format(t, dom_registered, m)
+    score = levenshtein(dom_real, dom_registered)
+    if 3 >= score >= 0:
+        name = dom_registered.replace('*.','')
+        print(f'{t}{fR} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{get_arecord_ip(name)}]')
+        open(LOG,'a').write(log_msg)
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.INFO)
     certstream.listen_for_events(print_callback, url='wss://certstream.calidog.io/')
+    
