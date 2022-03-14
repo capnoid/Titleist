@@ -6,7 +6,9 @@ import numpy as np
 import certstream
 import datetime
 import logging
+import requests
 import random
+import json
 import time
 import os
 
@@ -87,34 +89,34 @@ def print_callback(message, context):
             tsfmt = datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S')
             msg = " , ".join(message['data']['leaf_cert']['all_domains'][1:])
             
-            # spot_a_squat(tsfmt, domain, msg)
-            # Check if the domain looks like a misspelling of a common domain/target domain
-            
-            # Look for Squatters based on Levenshtein Scores
-            # TARGETS = ['*.discord','*.discord-nitro''*.discordapp','*.twitch','*.amazon']
-            # TLDs = ['.com','.gift','.co','.gg','.xyz']
-            
-            # threads = multiprocessing.Pool(5)
-            # for real_domain in TOP_DOMAINS[0:1000]:
-            #     # test_domain(domain, real_domain, msg, tsfmt)
-            #     event = threads.apply_async(test_domain, (domain,f'{real_domain}', msg, tsfmt))
-            #     event.get(2)
-            test_domain(domain,'*.discord-nitro.com', msg, tsfmt)
-            test_domain(domain,'*.discordapp.com', msg, tsfmt)
-            test_domain(domain,'*.discord.gift', msg, tsfmt)
-            test_domain(domain,'*.discord.xyz', msg, tsfmt)
-            test_domain(domain,'*.discord.com', msg, tsfmt)
-            test_domain(domain,'*.discord.co', msg, tsfmt)
-            test_domain(domain,'*.discord.gg', msg, tsfmt)
+            sus = False
+            threads = multiprocessing.Pool(7)
+            for real_domain in TOP_DOMAINS[0:10000]:
+                # test_domain(domain, real_domain, msg, tsfmt)
+                event = threads.apply_async(test_domain, (domain,f'{real_domain}', msg, tsfmt))
+                if event.get(2):
+                    sus = True
+                    break
+            if not sus:
+                print(f'{tsfmt}{fG} {domain} {fW}was registered by {get_arecord_ip(domain.replace("*.",""))}')
+            # Or you can check a specific domain with:
+            # score = test_domain(domain, '*.yourdomain.com')
             
         
 def test_domain(dom_registered, dom_real, m, t):
     log_msg = u"[{}] {} (SAN: {})\n".format(t, dom_registered, m)
     score = levenshtein(dom_real, dom_registered)
-    if 3 >= score >= 0:
+    if 2 >= score >= 0:
         name = dom_registered.replace('*.','')
-        print(f'{t}{fR} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{get_arecord_ip(name)}]')
+        ip = get_arecord_ip(name)
+        print(f'{t}{fB} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{ip}]')
+        # Maybe also show the Location data?
+        # locdat  = requests.get(f'http://ipinfo.io/{ip}')
+        # print(fW+json.loads(locdat.text))
         open(LOG,'a').write(log_msg)
+        return True
+    else:
+        return False
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.INFO)
