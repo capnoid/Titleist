@@ -19,7 +19,7 @@ init(autoreset=True)
 # create a log file 
 LOG = os.path.join(os.getcwd(),'squatters.txt')
 if not os.path.isfile(LOG):
-    open(LOG,'w').write('')
+    open(LOG,'w').write('SPOT_A_SQUAT\n')
 
 fB = Fore.LIGHTBLUE_EX
 fR = Fore.RED
@@ -122,7 +122,7 @@ def test_domain(dom_registered, dom_real, m, t):
         # Maybe also show the Location data?
         # locdat  = requests.get(f'http://ipinfo.io/{ip}')
         # print(fW+json.loads(locdat.text))
-        open(LOG,'a').write(log_msg)
+        open(LOG,'a').write(u"[{}] {} (SAN: {} [similar to {dom_real}? IP:{ip})\n".format(t, dom_registered, m))
         return True
     else:
         return False
