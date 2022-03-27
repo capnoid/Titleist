@@ -1,4 +1,4 @@
-from colorama import init, Fore
+from colorama import init, Fore, Style
 from parser import levenshtein
 import multiprocessing
 import pandas as pd
@@ -17,16 +17,18 @@ import os
 date_label = datetime.datetime.now().strftime('%m%d%y')
 LOG = os.path.join(os.getcwd(),f'squatters{date_label}.txt')
 if not os.path.isfile(LOG):
-    open(LOG,'w').write('SPOT_A_SQUAT\n')
+    open(LOG,'w').write('')
 
 fB = Fore.LIGHTBLUE_EX
 fR = Fore.RED
 fW = Fore.WHITE
-fM = Fore.MAGENTA
+fO = '\033[33m'
+fP = '\033[93m'
 fC = Fore.CYAN
 fG = Fore.GREEN
 fY = Fore.YELLOW
-OFF = ''
+BOLD = '\033[1m'
+OFF = '\033[0m'
 
 top1m = pd.read_csv('top-1m.csv')
 TOP_DOMAINS = list(top1m[:]['DOMAIN'])
@@ -46,11 +48,11 @@ def test_domain(dom_registered, dom_real, t):
     except:
         ip = ''
         pass
-    if 3 >= score >= 0:
+    if 3 > score >= 0:
         name = dom_registered.replace('*.','')
-        log_msg = f'{t}{fB} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{ip}]'
+        log_msg = f'{t}{BOLD}{fP} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{ip}]'
         print(log_msg)
-        open('squatters_01.txt','a').write(u"[{}] {} (SAN: {} [similar to {dom_real}? IP:{ip})\n".format(t, dom_registered, m))
+        open(LOG,'a').write(f"[{t}] {dom_registered} [similar to {dom_real}? IP:{ip})\n")
         # Maybe also show the Location data?
         return True
     else:
@@ -77,23 +79,26 @@ def print_callback(message, context):
 				pass
        		
 			sus = False
-			threads = multiprocessing.Pool(8)
-			for real_domain in TOP_DOMAINS[0:750]:
+			threads = multiprocessing.Pool(10)
+			for real_domain in TOP_DOMAINS[0:1250]:
 				event = threads.apply_async(test_domain, (domain,f'{real_domain}', tsfmt))
 				if event.get(4):
 					sus = True
 					break
 			if not sus:
-				IP = get_arecord_ip(domain.replace("*.",""))
-				if domain.split('.')[-1] in ['ru', 'cn','hk']:
-					C = fR
-				elif domain.split('.')[-1] in ['gg', 'work','ml']:
-					C = '\033[1m'+fM
+				msg = f"[{tsfmt}] {domain} registered to {IP}\n"
+				if domain.split('.')[-1] in ['ru','cn','hk', 'kp']:
+					C = BOLD+fR
+					open(LOG,'a').write(msg)
+				elif domain.split('.')[-1] in ['party', 'download','trace','xin', 'stream']:
+					C = BOLD+fO
+					open(LOG,'a').write(msg)
 				elif 'autodiscover' in domain.split('.'):
-					C = fC
+					C = BOLD+fC
+					open(LOG,'a').write(msg)
 				else:
 					C = fG
-				print(f'{tsfmt}{C} {domain} {fW}was registered at {IP}\033[0m')
+				print(f'{tsfmt}{C} {domain} {fW}was registered at {IP}{OFF}')
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.INFO)
