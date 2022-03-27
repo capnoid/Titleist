@@ -33,8 +33,14 @@ OFF = ''
 top1m = pd.read_csv('top-1m.csv')
 TOP_DOMAINS = list(top1m[:]['DOMAIN'])
 
+
 def get_arecord_ip(host):
-    return str(dns.resolver.resolve(host, 'A')[0])
+    ans = b''
+    try:
+        ans = str(dns.resolver.resolve(host, 'A')[0])
+    except:
+        pass
+    return ans
 
 
 def levenshtein(seq1, seq2):
@@ -90,30 +96,32 @@ def print_callback(message, context):
             msg = " , ".join(message['data']['leaf_cert']['all_domains'][1:])
             
             sus = False
-            threads = multiprocessing.Pool(7)
-            for real_domain in TOP_DOMAINS[0:10000]:
+            threads = multiprocessing.Pool(4)
+            for real_domain in TOP_DOMAINS[0:50000]:
                 # test_domain(domain, real_domain, msg, tsfmt)
                 event = threads.apply_async(test_domain, (domain,f'{real_domain}', msg, tsfmt))
-                if event.get(2):
+                if event.get(5):
                     sus = True
                     break
             if not sus:
-                print(f'{tsfmt}{fG} {domain} {fW}was registered by {get_arecord_ip(domain.replace("*.",""))}')
-            # Or you can check a specific domain with:
-            # score = test_domain(domain, '*.yourdomain.com')
+                IP = get_arecord_ip(domain.replace("*.",""))
+                print(f'{tsfmt}{fG} {domain} {fW}was registered at {IP}')
             
         
 def test_domain(dom_registered, dom_real, m, t):
     log_msg = u"[{}] {} (SAN: {})\n".format(t, dom_registered, m)
     score = levenshtein(dom_real, dom_registered)
-    if 2 >= score >= 0:
-        name = dom_registered.replace('*.','')
+    try:
         ip = get_arecord_ip(name)
-        print(f'{t}{fB} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{ip}]')
+    except:
+        ip = ''
+        pass
+    if 3 > score >= 0:
+        name = dom_registered.replace('*.','')
+        log_msg = f'{t}{fB} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{ip}]'
+        print(log_msg)
         # Maybe also show the Location data?
-        # locdat  = requests.get(f'http://ipinfo.io/{ip}')
-        # print(fW+json.loads(locdat.text))
-        open(LOG,'a').write(log_msg)
+        open(LOG,'a').write(u"[{}] {} (SAN: {} [similar to {dom_real}? IP:{ip})\n".format(t, dom_registered, m))
         return True
     else:
         return False
