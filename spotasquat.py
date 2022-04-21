@@ -97,10 +97,10 @@ def print_callback(message, context):
             
             sus = False
             threads = multiprocessing.Pool(4)
-            for real_domain in TOP_DOMAINS[0:50000]:
+            for real_domain in TOP_DOMAINS[0:900]:
                 # test_domain(domain, real_domain, msg, tsfmt)
                 event = threads.apply_async(test_domain, (domain,f'{real_domain}', msg, tsfmt))
-                if event.get(5):
+                if event.get(3):
                     sus = True
                     break
             if not sus:
@@ -116,7 +116,7 @@ def test_domain(dom_registered, dom_real, m, t):
     except:
         ip = ''
         pass
-    if 3 > score >= 0:
+    if 2 > score >= 0:
         name = dom_registered.replace('*.','')
         log_msg = f'{t}{fB} {dom_registered} {fW}was registered {fW}[similar to {dom_real}? IP:{ip}]'
         print(log_msg)
@@ -127,6 +127,11 @@ def test_domain(dom_registered, dom_real, m, t):
         return False
 
 if __name__ == '__main__':
+    if '--server' in sys.argv:
+        os.system('python3 -m http.server 9876')
+        # Use this to let other machines pull the squatter files on machine
+        # useful if running seperate nodes for filtering different types of
+        # domains or 'watcher.py' variants. 
     logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.INFO)
     certstream.listen_for_events(print_callback, url='wss://certstream.calidog.io/')
     

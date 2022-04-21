@@ -103,30 +103,22 @@ def print_callback(message, context):
 				pass
        		
 			sus = False
-			threads = multiprocessing.Pool(10)
-			for real_domain in TOP_DOMAINS[0:7500]:
-				try:
-					event = threads.apply_async(test_domain, (domain,f'{real_domain}', tsfmt))
-					if event.get(3):
-						sus = True
-						break
-				except multiprocessing.TimeoutError:
-					pass
-			if not sus:
-				msg = f"[{tsfmt}] {domain} registered to {IP}\n"
-				if domain.split('.')[-1] in ['ru','cn','hk', 'kp','ua']:
-					open(LOG,'a').write(msg)
-				elif domain.split('.')[-1] in ['party', 'download','trace','xin', 'stream','cloud']:
-					open(LOG,'a').write(msg)
-				elif 'autodiscover' in domain.split('.'):
-					open(LOG,'a').write(msg)
-				print(f'{tsfmt} {domain} was registered at {IP}')
+			
+			msg = f"[{tsfmt}] {domain} registered to {IP}\n"
+			if domain.split('.')[-1] in ['ru','cn','hk', 'kp','ua']:
+				open(LOG,'a').write(msg)
+			elif domain.split('.')[-1] in ['party', 'download','trace','xin', 'stream','cloud']:
+				open(LOG,'a').write(msg)
+			elif 'autodiscover' in domain.split('.'):
+				open(LOG,'a').write(msg)
+			print(f'{tsfmt} {domain} was registered at {IP}')
 
 if __name__ == '__main__':
-    logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.INFO)
-    certstream.listen_for_events(print_callback, url='wss://certstream.calidog.io/')
     if '--server' in sys.argv:
         os.system('python3 -m http.server 9876')
         # Use this to let other machines pull the squatter files on machine
         # useful if running seperate nodes for filtering different types of
         # domains or 'watcher.py' variants. 
+    logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.INFO)
+    certstream.listen_for_events(print_callback, url='wss://certstream.calidog.io/')
+    
