@@ -116,7 +116,7 @@ def print_callback(message, context):
 
 if __name__ == '__main__':
     if '--server' in sys.argv:
-        os.system('python3 -m http.server 9876')
+        os.system('python3 -m http.server &')
         # Use this to let other machines pull the squatter files on machine
         # useful if running seperate nodes for filtering different types of
         # domains or 'watcher.py' variants. 
