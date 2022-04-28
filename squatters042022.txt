@@ -1,5 +1,0 @@
-[04/20/22 18:46:00] autodiscover.whatwouldangiedo.com registered to 162.241.219.116
-[04/20/22 18:52:02] multigreen.com.ua registered to 185.104.45.94
-[04/20/22 18:57:14] autodiscover.zipilates.be registered to 162.241.253.15
-[04/20/22 20:06:28] *.fizord.ru registered to 77.94.104.19
-[04/20/22 20:06:49] warehousewaste.croinc.bearle.ru registered to 104.248.42.51
