@@ -112,7 +112,7 @@ def print_callback(message, context):
 			elif domain.split('.')[-1] in ['party', 'download','to', 'stream','cloud']:
 				open(LOG,'a').write(msg)
 				C = BOLD + fY
-			elif domoain.find('torrent')>=0:
+			elif domain.find('torrent')>=0:
 				open(LOG,'a').write(msg)
 				C = BOLD + fR
 			print(f'{tsfmt} {C}{domain}{OFF} was registered at {fR}{IP}{OFF}')
