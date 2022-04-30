@@ -27,7 +27,7 @@ fC = Fore.CYAN
 fG = Fore.GREEN
 fY = Fore.YELLOW
 BOLD = Style.BRIGHT
-OFF = ''
+OFF = '\033[0m'
 
 top1m = pd.read_csv('top-1m.csv')
 TOP_DOMAINS = list(top1m[:]['DOMAIN'])
@@ -104,15 +104,18 @@ def print_callback(message, context):
 				pass
        		
 			sus = False
-			
+			C = ''
 			msg = f"[{tsfmt}] {domain} registered to {IP}\n"
 			if domain.split('.')[-1] in ['ru','cn','hk', 'kp','ua']:
 				open(LOG,'a').write(msg)
-			elif domain.split('.')[-1] in ['party', 'download','trace','xin', 'stream','cloud']:
+                C = BOLD + fC
+			elif domain.split('.')[-1] in ['party', 'download','to', 'stream','cloud']:
 				open(LOG,'a').write(msg)
-			elif 'autodiscover' in domain.split('.'):
+                C = BOLD + fY
+			elif domoain.find('torrent')>=0:
 				open(LOG,'a').write(msg)
-			print(f'{tsfmt} {domain} was registered at {IP}')
+                C = BOLD + fR
+            print(f'{tsfmt} {C}{domain}{OFF} was registered at {fR}{IP}{OFF}')
 
 if __name__ == '__main__':
     if '--server' in sys.argv:
